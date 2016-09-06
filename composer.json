@@ -1,0 +1,14 @@
+{
+    "name": "neweden/nazara",
+    "description": "Discord bot with a focus on EVE-Online",
+    "require": {
+        "team-reflex/discord-php": "^4.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Karbowiak",
+            "email": "karbowiak@gmail.com"
+        }
+    ]
+}
