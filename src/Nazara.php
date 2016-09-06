@@ -49,6 +49,17 @@ class Nazara {
         ));
     }
 
+    public function addPlugin($type, $command, $class, $perms, $description, $usage, $timer) {
+        $this->log->addInfo("Adding plugin: {$command}");
+        $this->$type[$command] = [
+            'permissions' => $perms,
+            'class' => $class,
+            'description' => $description,
+            'usage' => $usage,
+            'timer' => $timer
+        ];
+    }
+
     public function run() {
         $this->discord->on("ready", function(Discord $discord) {
             // Update the presence status
@@ -100,6 +111,38 @@ class Nazara {
 
         // Handle Voice
         $this->discord->on(Event::MESSAGE_CREATE, function(Message $message, Discord $discord) {
+            $prefix = $this->config->get("prefix", "bot");
+            if(substr($message->content, 0, strlen($prefix)) == $prefix) {
+                $content = explode(" ", $message->content);
+                foreach($this->onVoice as $command => $data) {
+                    $parts = [];
+                    foreach ($content as $index => $c) {
+                        foreach (explode("\n", $c) as $p)
+                            $parts[] = $p;
+                    }
+                    if ($parts[0] === $prefix . $command) {
+                        try {
+                            $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
+                            $channels = $this->discordHelper->getChannelsForGuild($discord, $channelData->guild_id);
+                            foreach($channels as $channel) {
+                                if($channel->bitrate != null) {
+                                    if(count($channel->members) > 0) {
+                                        foreach($channel->members as $member) {
+                                            if($member->user_id == $message->author->id) {
+                                                $voice = new $data['class']();
+                                                $voice->run($message, $discord, $this->log, $this->audioStreams, $channel, $channelData->guild_id, $this->container);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            $this->log->addError("Error running voice command {$prefix}{$command}. Command run by {$message->author->username} in {$message->getChannelAttribute()->name}. Error: {$e->getMessage()}");
+                            $message->reply("**Error:** There was a problem running the command: {$e->getMessage()}");
+                        }
+                    }
+                }
+            }
         });
 
         // Handle CleverBot

@@ -4,6 +4,7 @@ namespace Nazara\Commands;
 use Discord\Discord;
 use Nazara\Helper\Container;
 use Nazara\Nazara;
+use Nazara\Service\SystemPluginServiceProvider;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -34,7 +35,7 @@ class StartBot extends Command {
             $bot = $container->get("bot");
 
             // Add the plugins
-            //$container->addServiceProvider(\Nazara\Service\SystemPluginServiceProvider::class);
+            $container->addServiceProvider(SystemPluginServiceProvider::class);
 
             $bot->run();
         } catch(\Exception $e) {

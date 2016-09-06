@@ -32,6 +32,14 @@ class DiscordHelper {
         }
     }
 
+    public function getChannelsForGuild(\Discord\Discord $discord, $guildID) {
+        foreach($discord->guilds as $guild) {
+            if($guild->id == $guildID) {
+                return $guild->channels;
+            }
+        }
+    }
+
     public function getChannel(\Discord\Discord $discord, $channelID) {
         foreach ($discord->guilds as $guild) {
             foreach($guild->channels as $channel) {
