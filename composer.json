@@ -2,7 +2,17 @@
     "name": "neweden/nazara",
     "description": "Discord bot with a focus on EVE-Online",
     "require": {
-        "team-reflex/discord-php": "^4.0"
+        "php": "^7.0.0",
+        "team-reflex/discord-php": "^4.0.1",
+        "mongodb/mongodb": "^1.0.2",
+        "symfony/console": "^3.1.4",
+        "monolog/monolog": "^1.21.0",
+        "league/container": "^2.2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nazara\\": "src/"
+        }
     },
     "license": "MIT",
     "authors": [

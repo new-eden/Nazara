@@ -1,0 +1,7 @@
+<?php
+
+require_once(__DIR__ . "/../vendor/autoload.php");
+
+$bot = new \Symfony\Component\Console\Application();
+$bot->add(new \Nazara\Commands\StartBot());
+$bot->run();
