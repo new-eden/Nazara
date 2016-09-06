@@ -2,3 +2,4 @@
 config/config.php
 composer.phar
 .idea
+cache
