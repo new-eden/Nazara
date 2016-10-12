@@ -1,14 +1,11 @@
 <?php
 namespace Nazara;
 
+use DateTime;
 use Discord\Discord;
-use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Message;
-use Discord\Parts\Guild\Guild;
 use Discord\Parts\User\Game;
-use Discord\Parts\User\User;
 use Discord\Parts\WebSockets\PresenceUpdate;
-use Discord\Repository\Guild\ChannelRepository;
 use Discord\WebSockets\Event;
 use League\Container\Container;
 use React\EventLoop\StreamSelectLoop;
@@ -24,11 +21,10 @@ class Nazara {
     protected $config;
     protected $users;
     protected $cleverbot;
+    protected $startTime;
     private $onMessage = array();
     private $onVoice = array();
     private $onTimer = array();
-    private $audioStreams = array();
-    private $extraData = array();
 
     public function __construct(Container $container) {
         $this->container = $container;
@@ -38,6 +34,7 @@ class Nazara {
         $this->messages = $container->get("messages");
         $this->users = $container->get("users");
         $this->cleverbot = $container->get("cleverbot");
+        $this->startTime = $container->get("startTime");
 
         $this->log->addInfo("Initializing Discord and Websocket connection...");
         // Got to use the StreamSelectLoop otherwise the library won't function
@@ -47,6 +44,10 @@ class Nazara {
             "logger" => $this->log,
             "loop" => $this->loop
         ));
+    }
+
+    public function getPlugins() {
+        return array("onMessage" => $this->onMessage, "onVoice" => $this->onVoice);
     }
 
     public function addPlugin($type, $command, $class, $perms, $description, $usage, $timer) {
@@ -72,20 +73,25 @@ class Nazara {
             $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
 
             // Setup the garbage collection timer
-            $this->loop->addPeriodicTimer(300, function() {
-                $this->log->addInfo("Collecting garbage...");
-                gc_collect_cycles();
+            //$this->loop->addPeriodicTimer(300, function() {
+            //    $this->log->addInfo("Collecting garbage...");
+            //    gc_collect_cycles();
 
-                $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
-            });
+            //    $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
+            //});
 
             // Echo out how many guilds and members we're looking at
             $this->loop->addPeriodicTimer(300, function() {
                 $guildCount = $this->discordHelper->getGuildCount($this->discord);
                 $memberCount = $this->discordHelper->getMemberCount($this->discord);
 
+                $time1 = new DateTime(date("Y-m-d H:i:s", $this->startTime));
+                $time2 = new DateTime(date("Y-m-d H:i:s"));
+                $interval = $time1->diff($time2);
+
                 // Add in voice streams that are running
                 $this->log->addInfo("Recount... Now available to: {$guildCount} guilds and {$memberCount} members...");
+                $this->log->addInfo("Uptime: " . $interval->y . " Year(s), " . $interval->m . " Month(s), " . $interval->d . " Days, " . $interval->h . " Hours, " . $interval->i . " Minutes, " . $interval->s . " seconds.");
             });
 
             //@todo run a timer that checks if there is any active voice sessions. If there are, check if there are users listening, if not, end the session
@@ -93,20 +99,59 @@ class Nazara {
 
         // Message logging
         $this->discord->on(Event::MESSAGE_CREATE, function(Message $message, Discord $discord) {
-            $this->log->addInfo("Message from: {$message->author}", array($message->content));
+            // Ignore it if the message is from the bot
+            if($message->author->id != $discord->id) {
+                $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
+                if ($channelData != null) {
+                    $guildData = $this->discordHelper->getGuild($discord, $channelData->guild_id);
+                    $userData = $this->discordHelper->getMember($discord, $message->author->id);
 
-            // Log message to Mongo
-            $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
-            $guildData = $this->discordHelper->getGuild($discord, $channelData->guild_id);
-            $userData = $this->discordHelper->getMember($discord, $message->author->id);
-            $this->messages->storeMessage($message->content, (int) $message->id, $message->author->username, $userData->nick, (int) $message->author->id, $message->timestamp->toIso8601String(), $channelData->name, (int) $channelData->id, $guildData->name, (int) $guildData->id);
+                    // Log message to Mongo
+                    $this->messages->storeMessage($message->content, (int)$message->id, $message->author->username, $userData->nick, (int)$message->author->id, $message->timestamp->toIso8601String(), $channelData->name, (int)$channelData->id, $guildData->name, (int)$guildData->id);
 
-            // Add user to users table
-            $this->users->storeUser($message->author->username, $userData->nick, (int) $message->author->id, (int) $userData->user->discriminator, $userData->user->avatar, $userData->status, $userData->game->name);
+                    // Add user to users table
+                    $this->users->storeUser($message->author->username, $userData->nick, (int)$message->author->id, (int)$userData->user->discriminator, $userData->user->avatar, $userData->status, $userData->game->name);
+
+                    // Log output
+                    $this->log->addInfo("Message from: {$message->author->username} ($guildData->name)", array($message->content));
+                } else {
+                    $this->log->addInfo("Message from: {$message->author->username}", array($message->content));
+                }
+            }
         });
 
         // Plugins
         $this->discord->on(Event::MESSAGE_CREATE, function(Message $message, Discord $discord) {
+            //@todo add the ability to define the prefix on a pr. server basis
+            $prefix = $this->config->get("prefix", "bot");
+            if(substr($message->content, 0, strlen($prefix)) == $prefix) {
+                $content = explode(" ", $message->content);
+                foreach($this->onMessage as $command => $data) {
+                    $parts = [];
+                    foreach ($content as $index => $c) {
+                        foreach (explode("\n", $c) as $p)
+                            $parts[] = $p;
+                    }
+                    if ($parts[0] === $prefix . $command) {
+                        $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
+                        try {
+                            //@todo add permission system - and levels
+                            $plugin = new $data["class"];
+                            $returnData = $plugin->run($discord, $this->container, $message, $parts);
+
+                            if($returnData["type"] == "private") {
+                                $message->reply("Look in a PM for more information...");
+                                $message->author->sendMessage($returnData["message"]);
+                            }
+                            else
+                                $message->reply($returnData["message"]);
+                        } catch (\Exception $e) {
+                            $this->log->addError("Error running plugin command {$prefix}{$command}. Command run by {$message->author->username} in {$channelData->name}. Error: {$e->getMessage()}");
+                            $message->reply("**Error:** There was a problem running the command: {$e->getMessage()}");
+                        }
+                    }
+                }
+            }
         });
 
         // Handle Voice
@@ -121,8 +166,8 @@ class Nazara {
                             $parts[] = $p;
                     }
                     if ($parts[0] === $prefix . $command) {
+                        $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
                         try {
-                            $channelData = $this->discordHelper->getChannel($discord, $message->channel_id);
                             $channels = $this->discordHelper->getChannelsForGuild($discord, $channelData->guild_id);
                             foreach($channels as $channel) {
                                 if($channel->bitrate != null) {
@@ -137,7 +182,7 @@ class Nazara {
                                 }
                             }
                         } catch (\Exception $e) {
-                            $this->log->addError("Error running voice command {$prefix}{$command}. Command run by {$message->author->username} in {$message->getChannelAttribute()->name}. Error: {$e->getMessage()}");
+                            $this->log->addError("Error running voice command {$prefix}{$command}. Command run by {$message->author->username} in {$channelData->name}. Error: {$e->getMessage()}");
                             $message->reply("**Error:** There was a problem running the command: {$e->getMessage()}");
                         }
                     }
@@ -168,13 +213,6 @@ class Nazara {
                 // Update a user
                 $this->users->storeUser($userData->user->username, $userData->nick, (int)$presenceUpdate->user->id, (int)$userData->user->discriminator, $userData->user->avatar, $presenceUpdate->status, $presenceUpdate->game->name);
             }
-        });
-
-        // Handle guild joining/leaving
-        $this->discord->on(Event::GUILD_CREATE, function(Guild $guild) {
-        });
-
-        $this->discord->on(Event::GUILD_DELETE, function(Guild $guild) {
         });
 
         // Handle errors

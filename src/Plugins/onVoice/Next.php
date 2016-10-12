@@ -12,7 +12,7 @@ class Next {
     public function run(Message $message, Discord $discord, Logger $log, &$audioStreams, Channel $channel, $guildID, Container $container) {
         if (isset($audioStreams[$guildID])) {
             $audioStreams[$guildID]->stop();
-            $message->reply("Skipping to the next song..");
+            //$message->reply("Skipping to the next song..");
         }
     }
 }

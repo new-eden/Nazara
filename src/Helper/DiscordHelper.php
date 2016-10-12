@@ -1,15 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: micha
- * Date: 06-09-2016
- * Time: 20:44
- */
-
 namespace Nazara\Helper;
 
-
-use Discord\Parts\Guild\Guild;
 
 class DiscordHelper {
     public function getMemberCount(\Discord\Discord $discord) {

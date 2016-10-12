@@ -1,7 +1,6 @@
 <?php
 namespace Nazara\Commands;
 
-use Discord\Discord;
 use Nazara\Helper\Container;
 use Nazara\Nazara;
 use Nazara\Service\SystemPluginServiceProvider;
@@ -18,10 +17,10 @@ class StartBot extends Command {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        //ini_set("memory_limit", "-1");
-        //gc_enable();
-        //error_reporting(1);
-        //error_reporting(E_ALL);
+        ini_set("memory_limit", "-1");
+        gc_enable();
+        error_reporting(1);
+        error_reporting(E_ALL);
 
         // Load the container
         $container = (new Container())->getContainer();

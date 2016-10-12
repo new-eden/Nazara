@@ -19,6 +19,24 @@ class SystemPluginServiceProvider extends AbstractServiceProvider implements Boo
     public function boot() {
         $bot = $this->getContainer()->get("bot");
 
+        // Regular plugins
+        $bot->addPlugin("onMessage", "help", "\\Nazara\\Plugins\\onMessage\\Help", 1, "Show the help information", "%%help or %%help <type> for specific plugin help", null);
+        $bot->addPlugin("onMessage", "porn", "\\Nazara\\Plugins\\onMessage\\Porno", 1, "Shows pornographic images on Discord..", "%%porn <type>, for example %%porn redheads", null);
+        $bot->addPlugin("onMessage", "about", "\\Nazara\\Plugins\\onMessage\\About", 1, "Shows information about the bot and it's creator...", "%%about", null);
+        $bot->addPlugin("onMessage", "wolf", "\\Nazara\\Plugins\\onMessage\\WolframAlpha", 1, "Queries WolframAlpha, and gets you a result...", "%%wolf <query>", null);
+        $bot->addPlugin("onMessage", "coinflip", "\\Nazara\\Plugins\\onMessage\\CoinFlip", 1, "Flips a coin, and tells you what it landed as...", "%%coinflip", null);
+        $bot->addPlugin("onMessage", "eightball", "\\Nazara\\Plugins\\onMessage\\EightBall", 1, "Shakes the magic eightball, and tells you the result...", "%%eightball", null);
+        $bot->addPlugin("onMessage", "meme", "\\Nazara\\Plugins\\onMessage\\Meme", 1, "Dank memes...", "%%meme", null);
+        $bot->addPlugin("onMessage", "time", "\\Nazara\\Plugins\\onMessage\\Time", 1, "Tells you the current time, in multiple timezones...", "%%time", null);
+        $bot->addPlugin("onMessage", "tq", "\\Nazara\\Plugins\\onMessage\\Tranquility", 1, "Shows the current status of the Tranquility Cluster, as reported by CREST...", "%%tq", null);
+        $bot->addPlugin("onMessage", "pc", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%pc <item>", null);
+        $bot->addPlugin("onMessage", "jita", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%jita <item>", null);
+        $bot->addPlugin("onMessage", "amarr", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%amarr <item>", null);
+        $bot->addPlugin("onMessage", "dodixie", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%dodixie <item>", null);
+        $bot->addPlugin("onMessage", "hek", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%hek <item>", null);
+        $bot->addPlugin("onMessage", "rens", "\\Nazara\\Plugins\\onMessage\\PriceCheck", 1, "Shows EVE market information for an item...", "%%rens <item>", null);
+        $bot->addPlugin("onMessage", "join", "\\Nazara\\Plugins\\onMessage\\Join", 1, "Shows an invite link", "%%join", null);
+
         // Voice Plugins
         $bot->addPlugin('onVoice', 'horn', "\\Nazara\\Plugins\\onVoice\\Horns", 1, 'Horns. Just horns..', '', null);
         $bot->addPlugin('onVoice', 'reapers', "\\Nazara\\Plugins\\onVoice\\Reapers", 1, 'Plays a random quote from Sovereign', '', null);
