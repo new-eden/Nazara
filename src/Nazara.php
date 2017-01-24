@@ -3,6 +3,7 @@ namespace Nazara;
 
 use DateTime;
 use Discord\Discord;
+use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\User\Game;
 use Discord\Parts\WebSockets\PresenceUpdate;
@@ -25,6 +26,7 @@ class Nazara {
     private $onMessage = array();
     private $onVoice = array();
     private $onTimer = array();
+    private $timerRuntimes = array();
 
     public function __construct(Container $container) {
         $this->container = $container;
@@ -35,10 +37,10 @@ class Nazara {
         $this->users = $container->get("users");
         $this->cleverbot = $container->get("cleverbot");
         $this->startTime = $container->get("startTime");
-
         $this->log->addInfo("Initializing Discord and Websocket connection...");
         // Got to use the StreamSelectLoop otherwise the library won't function
         $this->loop = new StreamSelectLoop();
+
         $this->discord = new Discord(array(
             "token" => $this->config->get("token", "discord"),
             "logger" => $this->log,
@@ -73,12 +75,12 @@ class Nazara {
             $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
 
             // Setup the garbage collection timer
-            //$this->loop->addPeriodicTimer(300, function() {
-            //    $this->log->addInfo("Collecting garbage...");
-            //    gc_collect_cycles();
+            $this->loop->addPeriodicTimer(300, function() {
+                $this->log->addInfo("Collecting garbage...");
+                gc_collect_cycles();
 
-            //    $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
-            //});
+                $this->log->addInfo("Now using " . round(memory_get_usage() / 1024 / 1024, 2) . "MB memory (Peak: " . round(memory_get_peak_usage() / 1024 / 1024, 2) . "MB)...");
+            });
 
             // Echo out how many guilds and members we're looking at
             $this->loop->addPeriodicTimer(300, function() {
@@ -92,6 +94,26 @@ class Nazara {
                 // Add in voice streams that are running
                 $this->log->addInfo("Recount... Now available to: {$guildCount} guilds and {$memberCount} members...");
                 $this->log->addInfo("Uptime: " . $interval->y . " Year(s), " . $interval->m . " Month(s), " . $interval->d . " Days, " . $interval->h . " Hours, " . $interval->i . " Minutes, " . $interval->s . " seconds.");
+            });
+
+            $this->loop->addPeriodicTimer(1, function() {
+                foreach($this->onTimer as $timer) {
+                    $lastRan = !empty($this->timerRuntimes[$timer["class"]]) ? $this->timerRuntimes[$timer["class"]] : 0;
+                    if($lastRan <= time() - $timer["timer"]) {
+                        $this->log->addInfo("Running timer: {$timer["class"]}");
+
+                        $plugin = new $timer["class"];
+                        $data = $plugin->run($this->container);
+
+                        if(!empty($data["message"])) {
+                            /** @var Channel $channel */
+                            $channel = $this->discordHelper->getChannel($this->discord, $data["channelID"]);
+                            foreach($data["message"] as $msg)
+                                $channel->sendMessage($msg);
+                        }
+                        $this->timerRuntimes[$timer["class"]] = time();
+                    }
+                }
             });
 
             //@todo run a timer that checks if there is any active voice sessions. If there are, check if there are users listening, if not, end the session

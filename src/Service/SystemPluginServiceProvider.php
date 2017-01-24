@@ -51,6 +51,9 @@ class SystemPluginServiceProvider extends AbstractServiceProvider implements Boo
         $bot->addPlugin('onVoice', 'next', "\\Nazara\\Plugins\\onVoice\\Next", 1, 'Goes to the next track if radio90s is playing', '', null);
         $bot->addPlugin('onVoice', 'unpause', "\\Nazara\\Plugins\\onVoice\\UnPause", 1, 'Resumes audio playback', '', null);
         $bot->addPlugin('onVoice', 'resume', "\\Nazara\\Plugins\\onVoice\\UnPause", 1, 'Resumes audio playback', '', null);
+
+        // Timer plugins
+        $bot->addPlugin("onTimer", "seatSiphons", "\\Nazara\\Plugins\\onTimer\\seatSiphons", 0, "", "", 1800);
     }
 
     public function register() {

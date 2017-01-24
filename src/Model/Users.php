@@ -20,13 +20,8 @@ class Users extends Mongo {
         $existing = $this->collection->findOne(array("id" => $id));
         if(!empty($existing)) {
             $games = $existing["gamesPlayed"];
-            if($game != null && !empty($games)) {
-                foreach ($games as $g) {
-                    if ($g != $game) {
-                        $games[] = $game;
-                    }
-                }
-            }
+            if(!in_array($game, $games))
+                $games[] = $game;
         }
         elseif($game != null) {
             $games = array($game);

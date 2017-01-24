@@ -48,6 +48,11 @@ class Porno {
             "bbw" => "https://api.imgur.com/3/gallery/r/bbw/time/all/",
             "dongs" => "https://api.imgur.com/3/gallery/r/penis/time/all/",
             "innie" => "https://api.imgur.com/3/gallery/r/innie/time/all/",
+            "donald" => array(
+                "https://api.imgur.com/3/gallery/r/donald_trump/time/all/",
+                "https://api.imgur.com/3/gallery/t/trump/time/all/"
+            ),
+            "eve" => "https://api.imgur.com/3/album/KaVsO",
         );
 
         foreach($categories as $catName => $catURL) {
@@ -70,12 +75,22 @@ class Porno {
             $data = $curl->getData($url, $headers);
             if ($data) {
                 $json = json_decode($data, true)["data"];
-                $img = $json[array_rand($json)];
-                if(!empty($img["gifv"]))
-                    $imageURL = $img["gifv"];
-                else
-                    $imageURL = $img["link"];
 
+                if($json["in_gallery"] === false && $json["section"] === null)
+                    $type = "album";
+                else
+                    $type = "gallery";
+
+                if($type == "gallery") {
+                    $img = $json[array_rand($json)];
+                    if(!empty($img["gifv"])) $imageURL = $img["gifv"]; else
+                        $imageURL = $img["link"];
+                }
+                else {
+                    $img = $json["images"][array_rand($json["images"])];
+                    if(!empty($img["gifv"])) $imageURL = $img["gifv"]; else
+                        $imageURL = $img["link"];
+                }
                 $msg = "**Title:** {$img["title"]} | **Section:** {$img["section"]} | **url:** {$imageURL}";
                 return array("type" => "public", "message" => $msg);
             }

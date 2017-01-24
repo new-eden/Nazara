@@ -3,7 +3,7 @@
     "description": "Discord bot with a focus on EVE-Online",
     "require": {
         "php": "^7.0.0",
-        "team-reflex/discord-php": "^4.0.1",
+        "team-reflex/discord-php": "dev-develop",
         "mongodb/mongodb": "^1.0.2",
         "symfony/console": "^3.1.4",
         "monolog/monolog": "^1.21.0",
