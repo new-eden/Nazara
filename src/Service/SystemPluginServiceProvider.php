@@ -41,6 +41,7 @@ class SystemPluginServiceProvider extends AbstractServiceProvider implements Boo
         $bot->addPlugin('onVoice', 'horn', "\\Nazara\\Plugins\\onVoice\\Horns", 1, 'Horns. Just horns..', '', null);
         $bot->addPlugin('onVoice', 'reapers', "\\Nazara\\Plugins\\onVoice\\Reapers", 1, 'Plays a random quote from Sovereign', '', null);
         $bot->addPlugin('onVoice', 'warnings', "\\Nazara\\Plugins\\onVoice\\EveWarnings", 1, 'Plays a random warning sound from EVE-Online', '', null);
+        $bot->addPlugin('onVoice', 'terror', "\\Nazara\\Plugins\\onVoice\\Terror", 1, 'It\'s terror time!', '', null);
         $bot->addPlugin('onVoice', 'radio', "\\Nazara\\Plugins\\onVoice\\RadioStations", 1, 'Keeps on playing a Radio station, till you go !stop', '', null);
         $bot->addPlugin('onVoice', 'unleashthe90s', "\\Nazara\\Plugins\\onVoice\\UnleashThe90s", 1, 'Plays a random 90s song', '', null);
         $bot->addPlugin('onVoice', 'radio90s', "\\Nazara\\Plugins\\onVoice\\Radio90s", 1, 'Keeps on playing 90s songs, till you go !stop', '', null);
